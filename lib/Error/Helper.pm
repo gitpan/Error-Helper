@@ -9,11 +9,11 @@ Error::Helper - Provides some easy error related methods.
 
 =head1 VERSION
 
-Version 0.0.0
+Version 0.1.0
 
 =cut
 
-our $VERSION = '0.0.0';
+our $VERSION = '0.1.0';
 
 
 =head1 SYNOPSIS
@@ -191,6 +191,34 @@ sub warn{
 
 	print STDERR $package.' '.$subroutine.':'.$self->error.
 		': '.$self->errorString.' at '.$filename.' line '.$line."\n";
+}
+
+=head2 warnString
+
+Throws a warn like error in the same for mate as warn, but with a freeform message.
+
+    $self->warnString('some error');
+
+=cut
+
+sub warnString{
+	my $self=$_[0];
+	my $string=$_[1];
+	
+	if(!defined($string)){
+		$string='undef';
+	}
+	
+	my ($package, $filename, $line)=caller;
+
+	#get the calling sub
+	my @called=caller( 1 );
+	my $subroutine=$called[3];
+	$subroutine=~s/.*\:\://g;
+
+	$package =~ s/\:\:/\-/g;
+
+	print STDERR $package.' '.$subroutine.': '.$string.' in '.$filename.' at line '.$line."\n";
 }
 
 =head1 AUTHOR

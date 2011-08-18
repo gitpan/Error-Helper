@@ -1,5 +1,8 @@
 Revision history for Error-Helper
 
+0.1.0	2011-08-18/01:00
+		-Add 'warnString'. 
+
 0.0.0	2011-08-12/13:40
-	-Initial release.
+		-Initial release.
 
