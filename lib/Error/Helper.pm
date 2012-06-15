@@ -9,11 +9,11 @@ Error::Helper - Provides some easy error related methods.
 
 =head1 VERSION
 
-Version 0.1.0
+Version 1.0.0
 
 =cut
 
-our $VERSION = '0.1.0';
+our $VERSION = '1.0.0';
 
 
 =head1 SYNOPSIS
@@ -27,43 +27,49 @@ Below is a example module using this.
     use base 'Error::Helper';
     
     sub new{
-		my $arg=$_[1];
+        my $arg=$_[1];
 
-		my $self = {
-			perror=>undef,
-			error=>undef,
-			errorString=>"",
-		};
+        my $self = {
+            perror=>undef,
+            error=>undef,
+            errorString=>"",
+            errorExtra=>{
+                         flags=>{
+                                 1=>'UndefArg',
+                                 2=>'test',
+                                 }
+                         }.
+        };
         bless $self;
 
-		#error if $arg is set to "test"
+        #error if $arg is set to "test"
         if( $arg eq "test" ){
-			$self->{perror}=1;
-			$self->{error}=2;
-			$self->{errorString}='A value of "test" has been set';
-			$self->warn;
-			return $self;
+            $self->{perror}=1;
+            $self->{error}=2;
+            $self->{errorString}='A value of "test" has been set';
+            $self->warn;
+            return $self;
         }  
 
-		return undef;
+        return undef;
     }
 
     sub foo{
-		my $self=$_[0];
-		my $a=$_[1];
+        my $self=$_[0];
+        my $a=$_[1];
 
-		if( ! $self->errorblank ){
-			return undef;
+        if( ! $self->errorblank ){
+            return undef;
         }
 
-		if( !defined( $a ) ){
-			$self->{error}=1;
-			$self->{errorString}='No value specified';
-			$self->warn;
-			return undef;
-		}
+        if( !defined( $a ) ){
+            $self->{error}=1;
+            $self->{errorString}='No value specified';
+            $self->warn;
+            return undef;
+        }
 
-		return 1;
+        return 1;
     }
 
 Below is a example script.
@@ -72,13 +78,13 @@ Below is a example script.
     
     my $foo=Foo->new( $ARGV[0] );
     if( $foo->error ){
-	    warn('error:'.$foo->error.': '.$foo->errorString);
+        warn('error:'.$foo->error.': '.$foo->errorString);
         exit $foo->error;
     }
     
     $foo->foo($ARGV[1]);
     if( $foo->error ){
-	    warn('error:'.$foo->error.': '.$foo->errorString);
+        warn('error:'.$foo->error.': '.$foo->errorString);
         exit $foo->error;
     }
 
@@ -96,6 +102,18 @@ This contains a description of the current error.
 
 This is set to true is a permanent error is present. If note,
 it needs set to false.
+
+    $self->{errorExtra}
+
+This is a hash reserved for any additional Error::Helper stuff
+that may be added at a latter date.
+
+    $self->{errorExtra}{flags}
+
+This hash contains error integer to flag mapping. The keys are
+the error integer and the value is the flag.
+
+For any unmatched error integers, 'other' is returned.
 
 =head1 METHODS
 
@@ -124,8 +142,8 @@ It does the following.
 If $self->{perror} is set, it will not be able to blank any current
 errors.
 
-        $self->{error}=undef;
-        $self->{errorString}="";
+    $self->{error}=undef;
+    $self->{errorString}="";
 
 =cut
 
@@ -154,6 +172,36 @@ sub errorblank{
         return 1;
 };
 
+=head2 errorFlag
+
+This returns the error flag for the current error.
+
+If none is set, undef is returned.
+
+This may be used in a similar manner as the error method.
+
+    if ( $self->errorFlag ){
+        warn('error: '.$self->error.":".$self->errorFlag.":".$self->errorString);
+    }
+
+=cut
+
+sub errorFlag{
+	if ( ! $_[0]->{error} ){
+		return undef;
+	}
+
+	if (
+		( ! defined( $_[0]->{errorExtra} ) ) ||
+		( ! defined( $_[0]->{errorExtra}{flags} ) ) ||
+		( ! defined( $_[0]->{errorExtra}{flags}{ $_[1]->{error} } ) )
+		){
+		return 'other';
+	}
+
+	return $_[0]->{errorExtra}{flags}{ $_[1]->{error} };
+}
+
 =head2 errorString
 
 Returns the error string if there is one. If there is not,
@@ -167,6 +215,21 @@ it will return ''.
 
 sub errorString{
     return $_[0]->{errorString};
+}
+
+=head2 perror
+
+This returns a Perl boolean for if there is a permanent
+error or not.
+
+    if($self->perror){
+                warn('A permanent error is set');
+    }
+
+=cut
+
+sub perror{
+    return $_[0]->{perror};
 }
 
 =head2 warn
@@ -221,6 +284,14 @@ sub warnString{
 	print STDERR $package.' '.$subroutine.': '.$string.' in '.$filename.' at line '.$line."\n";
 }
 
+=head1 ERROR FLAGS
+
+Error flags are meant to be short non-spaced strings that are easier to remember than a specific error integer.
+
+'other' is the generic error flag for when one is not defined.
+
+An error flag should never evaluate to false if an error is present.
+
 =head1 AUTHOR
 
 Zane C. Bowers-Hadley, C<< <vvelox at vvelox.net> >>
@@ -263,13 +334,9 @@ L<http://search.cpan.org/dist/Error-Helper/>
 
 =back
 
-
-=head1 ACKNOWLEDGEMENTS
-
-
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2011 Zane C. Bowers-Hadley.
+Copyright 2012 Zane C. Bowers-Hadley.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published
